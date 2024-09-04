@@ -14,6 +14,50 @@ macro_rules! call_expr {
 }
 
 #[macro_export]
+macro_rules! nonnull_expr {
+    ($expr:expr) => {
+        swc_ecma_ast::Expr::TsNonNull(swc_ecma_ast::TsNonNullExpr {
+            span: swc_common::DUMMY_SP,
+            expr: Box::new($expr),
+        })
+    };
+}
+
+#[macro_export]
+macro_rules! assign_target {
+    ($left:literal, $right:expr) => {
+        swc_ecma_ast::AssignTarget::Simple(swc_ecma_ast::SimpleAssignTarget::Member(
+            crate::member!($left, $right),
+        ))
+    };
+    ($expr:expr) => {
+        swc_ecma_ast::AssignTarget::Simple(swc_ecma_ast::SimpleAssignTarget::Paren(
+            swc_ecma_ast::ParenExpr {
+                span: swc_common::DUMMY_SP,
+                expr: Box::new($expr),
+            },
+        ))
+    };
+}
+
+#[macro_export]
+macro_rules! member {
+    ($left:literal, $right:expr) => {
+        $crate::member!(
+            swc_ecma_ast::Expr::Ident(swc_ecma_utils::quote_ident!($left)),
+            $right
+        )
+    };
+    ($left:expr, $right:expr) => {
+        swc_ecma_ast::MemberExpr {
+            span: swc_common::DUMMY_SP,
+            obj: Box::new($left),
+            prop: swc_ecma_ast::MemberProp::Ident(swc_ecma_utils::quote_ident!($right)),
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! member_expr {
     ($left:literal, $right:expr) => {
         $crate::member_expr!(swc_ecma_utils::quote_ident!($left), $right)
@@ -489,7 +533,6 @@ macro_rules! undefined_type {
     };
 }
 
-
 #[macro_export]
 macro_rules! type_ref {
     ($lit:literal) => {
@@ -510,7 +553,6 @@ macro_rules! type_ref {
     };
 }
 
-
 #[macro_export]
 macro_rules! type_annotation {
     ($lit:literal) => {
@@ -523,9 +565,6 @@ macro_rules! type_annotation {
         }
     };
 }
-
-
-
 
 #[macro_export]
 macro_rules! type_query_entity {

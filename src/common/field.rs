@@ -1,14 +1,17 @@
 use crate::{
+    common::field_type::long_expr,
     context::{Context, Syntax},
     descriptor::FieldDescriptorProto,
-    runtime::Runtime,
 };
+use protobuf::Enum;
 use swc_common::DUMMY_SP;
 use swc_ecma_ast::{
-    ArrayLit, BinaryOp, ClassMember, ClassProp, Expr, PropName, TsArrayType, TsEntityName,
-    TsKeywordType, TsType, TsTypeAnn, TsTypeParamInstantiation, TsTypeRef,
+    ArrayLit, BinaryOp, Expr, ObjectLit, TsArrayType, TsEntityName, TsKeywordType,
+    TsKeywordTypeKind, TsType, TsTypeAnn, TsTypeParamInstantiation, TsTypeRef,
 };
 use swc_ecma_utils::{quote_ident, quote_str};
+
+use super::{field_type::long_ref_type, wire::{Tag, WireType}};
 
 pub type AccessNormalizerFn = fn(expr: &Expr) -> Expr;
 
@@ -42,9 +45,8 @@ pub fn static_field_member(_field: &FieldDescriptorProto) -> Expr {
 
 impl FieldDescriptorProto {
     pub fn into_accessor(&self, ctx: &Context) -> FieldAccessorFn {
-        if self.is_repeated() && self.is_map(ctx) {
-            bare_field_member
-        } else if self.is_repeated() && !self.is_packed(ctx) {
+        if (self.is_repeated() && self.is_map(ctx)) || (self.is_repeated() && !self.is_packed(ctx))
+        {
             bare_field_member
         } else {
             this_field_member
@@ -53,15 +55,11 @@ impl FieldDescriptorProto {
 }
 
 impl FieldDescriptorProto {
-    pub fn prop_name(&self) -> String {
-        if self.has_oneof_index() {
-            format!("#_{}", self.name())
-        } else {
-            self.name().to_string()
-        }
-    }
-
-    pub fn default_value_bin_expr(&self, ctx: &mut Context, accessor: FieldAccessorFn) -> Expr {
+    pub fn default_value_bin_expr<F: Fn(&FieldDescriptorProto) -> Expr>(
+        &self,
+        ctx: &mut Context,
+        accessor: F,
+    ) -> Expr {
         let neq_undefined_check = crate::bin_expr!(
             accessor(self),
             quote_ident!("undefined").into(),
@@ -150,14 +148,28 @@ impl FieldDescriptorProto {
         } else if self.is_string() {
             quote_str!(self.default_value()).into()
         } else if self.is_bigint() {
-            crate::lit_bigint!(self
-                .default_value
-                .clone()
-                .unwrap_or("0".to_string())
-                .parse::<num_bigint::BigInt>()
-                .expect("can not parse the default")
-                .into())
-            .into()
+            if ctx.options.bigint_as_long {
+                if self.has_default_value() {
+                    crate::call_expr!(
+                        crate::member_expr_bare!(long_expr(ctx), "fromValue"),
+                        vec![crate::expr_or_spread!(Expr::Lit(crate::lit_num!(self
+                            .default_value()
+                            .parse::<f64>()
+                            .unwrap())))]
+                    )
+                } else {
+                    crate::member_expr_bare!(long_expr(ctx), "ZERO")
+                }
+            } else {
+                crate::lit_bigint!(self
+                    .default_value
+                    .clone()
+                    .unwrap_or("0".to_string())
+                    .parse::<num_bigint::BigInt>()
+                    .expect("can not parse the default")
+                    .into())
+                .into()
+            }
         } else if self.is_number() {
             crate::lit_num!(self
                 .default_value
@@ -178,7 +190,26 @@ impl FieldDescriptorProto {
             quote_ident!("undefined").into()
         }
     }
-    fn ts_type(&self, ctx: &mut Context) -> Option<TsType> {
+
+    pub fn type_default_value(&self, ctx: &mut Context) -> Expr {
+        if self.is_bigint() && ctx.options.bigint_as_long {
+            let long = ctx.get_default_import("long", "Long");
+            crate::call_expr!(
+                crate::member_expr!(long, "fromValue"),
+                vec![crate::expr_or_spread!(crate::lit_num!(0).into())]
+            )
+        } else if self.is_number() {
+            crate::lit_num!(0).into()
+        } else if self.is_booelan() {
+            crate::lit_bool!(false).into()
+        } else if self.is_string() {
+            crate::lit_str!("").into()
+        } else {
+            self.default_value_expr(ctx, false)
+        }
+    }
+
+    pub fn ts_type(&self, ctx: &Context) -> Option<TsType> {
         let mut ts_type: Option<TsType> = None;
 
         if let Some(typref) = self.type_ref(ctx) {
@@ -186,10 +217,14 @@ impl FieldDescriptorProto {
         }
 
         if let Some(kind) = self.keyword_type_kind() {
-            ts_type = Some(TsType::TsKeywordType(TsKeywordType {
-                span: DUMMY_SP,
-                kind,
-            }))
+            if ctx.options.bigint_as_long && matches!(kind, TsKeywordTypeKind::TsBigIntKeyword) {
+                ts_type = Some(TsType::TsTypeRef(long_ref_type(ctx)))
+            } else {
+                ts_type = Some(TsType::TsKeywordType(TsKeywordType {
+                    span: DUMMY_SP,
+                    kind,
+                }))
+            }
         }
 
         if self.is_repeated() && self.is_map(ctx) {
@@ -220,38 +255,94 @@ impl FieldDescriptorProto {
         }
         ts_type
     }
-    pub fn type_annotation(&self, ctx: &mut Context) -> Option<Box<TsTypeAnn>> {
+
+    pub fn type_annotation(&self, ctx: &Context) -> Option<Box<TsTypeAnn>> {
         Some(Box::new(TsTypeAnn {
             span: DUMMY_SP,
             type_ann: Box::new(self.ts_type(ctx)?),
         }))
     }
-    pub fn nullish_type_annotation(&self, ctx: &mut Context) -> Option<Box<TsTypeAnn>> {
+    pub fn nullish_type_annotation(&self, ctx: &Context) -> Option<Box<TsTypeAnn>> {
         Some(Box::new(crate::type_union!(
             self.ts_type(ctx)?,
             crate::undefined_type!()
         )))
     }
 
-    pub fn print_prop<T: Runtime>(&self, ctx: &mut Context, _runtime: &T) -> ClassMember {
-        let mut value: Option<Box<Expr>> = None;
-        if ctx.syntax == &Syntax::Proto3 || self.is_repeated() || self.is_map(&ctx) {
-            value = Some(Box::new(self.default_value_expr(ctx, false)))
-        }
-        ClassMember::ClassProp(ClassProp {
+    pub fn field_header(&self) -> Tag {
+        Tag::make(self.number() as _, self.wire_type())
+    }
+
+    pub fn wire_type(&self) -> WireType {
+        WireType::for_type(self.type_())
+    }
+}
+
+impl FieldDescriptorProto {
+    pub fn interface_type_ann(&self, ctx: &Context) -> Option<Box<TsTypeAnn>> {
+        Some(Box::new(TsTypeAnn {
             span: DUMMY_SP,
-            key: PropName::Ident(crate::quote_ident_optional!(self.prop_name())),
-            value,
-            type_ann: self.type_annotation(ctx),
-            declare: false,
-            is_static: false,
-            decorators: vec![],
-            accessibility: None,
-            is_abstract: false,
-            is_optional: false,
-            is_override: false,
-            readonly: false,
-            definite: false,
-        })
+            type_ann: Box::new(self.interface_ts_type(ctx)?),
+        }))
+    }
+
+    pub fn interface_nullish_type_ann(&self, ctx: &Context) -> Option<Box<TsTypeAnn>> {
+        Some(Box::new(crate::type_union!(
+            self.interface_ts_type(ctx)?,
+            crate::undefined_type!()
+        )))
+    }
+
+    pub fn interface_ts_type(&self, ctx: &Context) -> Option<TsType> {
+        let mut ts_type: Option<TsType> = None;
+
+        if let Some(typref) = self.interface_type_ref(ctx) {
+            ts_type = Some(TsType::TsTypeRef(typref))
+        }
+
+        if let Some(kind) = self.keyword_type_kind() {
+            if ctx.options.bigint_as_long && matches!(kind, TsKeywordTypeKind::TsBigIntKeyword) {
+                ts_type = Some(TsType::TsTypeRef(long_ref_type(ctx)))
+            } else {
+                ts_type = Some(TsType::TsKeywordType(TsKeywordType {
+                    span: DUMMY_SP,
+                    kind,
+                }))
+            }
+        }
+
+        if self.is_repeated() && self.is_map(ctx) {
+            let descriptor = ctx
+                .get_map_type(self.type_name())
+                .expect(format!("can not find the map type {}", self.type_name()).as_str());
+            ts_type = Some(TsType::TsTypeRef(TsTypeRef {
+                span: DUMMY_SP,
+                type_name: TsEntityName::Ident(quote_ident!("Map")),
+                type_params: Some(Box::new(TsTypeParamInstantiation {
+                    span: DUMMY_SP,
+                    params: descriptor
+                        .field
+                        .into_iter()
+                        .map(|x: FieldDescriptorProto| {
+                            x.interface_type_ann(ctx)
+                                .expect("expect map fields to have corresponding type")
+                                .type_ann
+                        })
+                        .collect(),
+                })),
+            }))
+        } else if ts_type.is_some() && self.is_repeated() && !self.is_map(ctx) {
+            ts_type = Some(TsType::TsArrayType(TsArrayType {
+                elem_type: Box::new(ts_type.unwrap()),
+                span: DUMMY_SP,
+            }))
+        }
+        ts_type
+    }
+}
+
+impl FieldDescriptorProto {
+    pub fn has_computed_prop(&self) -> bool {
+        self.is_optional() && self.is_primitive()
     }
 }

@@ -1,91 +1,31 @@
-# Protoc Gen Typescript 
+# Protoc Gen ArkTS
 
-![conformance](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fthesayyn%2Fprotoc-gen-ts%2Frust-rewrite%2Finfra%2Fstats.json&query=percentile&suffix=%25&label=conformance)
-[![test](https://github.com/thesayyn/protoc-gen-ts/actions/workflows/test.yaml/badge.svg)](https://github.com/thesayyn/protoc-gen-ts/actions/workflows/test.yaml)
-[![npm](https://img.shields.io/npm/v/protoc-gen-ts)](https://www.npmjs.com/package/protoc-gen-ts?activeTab=versions)
-[![npm](https://img.shields.io/npm/dm/protoc-gen-ts)](https://www.npmjs.com/package/protoc-gen-ts?activeTab=versions)
-[![npm](https://opencollective.com/protoc-gen-ts/tiers/backer/badge.svg?label=Backer&color=brightgreen)](https://opencollective.com/protoc-gen-ts)
+> !NOTE
+> Forked from [protoc-gen-ts](https://github.com/thesayyn/protoc-gen-ts)
 
-Compile `.proto` files to plain TypeScript. Supports gRPC Node and gRPC Web.
+Compile `.proto` files to plain `ArkTS`. Supports concurrent with `@Sendable` on codec classes.
 
-> [!NOTE] 
-> As of 2024, this project has adopted Rust as its primary programming language, replacing JavaScript.
-> See [the issue](https://github.com/thesayyn/protoc-gen-ts/issues/255) for the details.
-
-## Contributing
-
-I have limited availability to consistently maintain this project, as my time is primarily allocated to cutting new releases and implementing fixes on an ad hoc basis.
-
-[See issues that needs help](https://github.com/thesayyn/protoc-gen-ts/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22)
-
-[See issues for newcomers](https://github.com/thesayyn/protoc-gen-ts/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
- 
-Become a maintainer? Send an [email](mailto:thesayyn@gmail.com?subject=Become%20a%20maintainer)
+Run with [`@ohos/protobufjs`](https://ohpm.openharmony.cn/#/cn/detail/@ohos%2Fprotobufjs)
 
 ## Features
 
 - Passes all required conformance tests
+- **Supports ArkTS(ets)** with `@Sendable` for concurrent
 - Supports well-known types
-- Supports [gRPC](docs/rpc.md) (`@grpc/grpc-js`)
-- Supports [gRPC Web](docs/rpc.md) (`grpc-web`)
-- Supports json encoding (`toJson`, `fromJson`)
+- ~~Supports json encoding (`toJson`, `fromJson`)~~
 - Supports binary encoding (`toBinary`, `fromBinary`)
 - Optimized for [de]serialization speed.
 
 ## Usage
 
 ```sh
-npm install -g protoc-gen-ts
+npm install -g @lark/protoc-gen-ets
 ```
 
 ### Protoc
 
 ```properties
-protoc -I=sourcedir --ts_out=dist myproto.proto
-```
-
-### Buf
-```yaml
-version: v1
-plugins:
-  - name: ts
-    path: ./node_modules/.bin/protoc-gen-ts
-    out: ./dist
-```
-
-### Example
-
-```proto
-syntax = "proto3";
-
-enum Role {
-    ADMIN = 0;
-    MOD = 1;
-}
-
-message Author {
-    Role role = 2;
-    oneof id_or_name {
-        string id = 4;
-        string name = 5;
-    }
-}
-```
-
-
-```typescript
-const author = Author.fromJson({
-    role: Kind.ADMIN,
-    name: "mary poppins",
-});
-
-// Serialize to binary
-const bytes: Uint8Array = author.toBinary();
-
-// Deserialize from binary
-const received: Change = Change.fromBinary(bytes);
-
-console.log(received.toJson())
+protoc -I=sourcedir --ets_out=dist myproto.proto --ets_opt="namespace_as_file=true,export_indcies=true,bigint_as_long=true"
 ```
 
 ## Development
@@ -93,17 +33,3 @@ console.log(received.toJson())
 ```sh
 ./infra/test.sh
 ```
-
-## Contributors
-
-![GitHub Contributors Image](https://contrib.rocks/image?repo=thesayyn/protoc-gen-ts)
-
-## Support
-
-We need your constant support to keep protoc-gen-ts well maintained and add new features.
-
-If your corporate has a OSS funding scheme, please consider supporting us monthly through open collective.
-
-<a href="https://opencollective.com/protoc-gen-ts">
-<img height="100px" src="https://opencollective.com/protoc-gen-ts/tiers/backer.svg?avatarHeight=36">
-</a>

@@ -1,4 +1,7 @@
-use crate::{descriptor::{DescriptorProto, FieldDescriptorProto}, context::Context};
+use crate::{
+    context::Context,
+    descriptor::{DescriptorProto, FieldDescriptorProto, OneofDescriptorProto},
+};
 
 impl DescriptorProto {
     pub fn get_oneof_fields(&self, current: &FieldDescriptorProto) -> Vec<FieldDescriptorProto> {
@@ -12,6 +15,13 @@ impl DescriptorProto {
             }
         }
         fields
+    }
+
+    pub fn get_oneof_fields_by_index(&self, oneof_index: i32) -> Vec<&FieldDescriptorProto> {
+        self.field
+            .iter()
+            .filter(|f| f.has_oneof_index() && f.oneof_index() == oneof_index)
+            .collect()
     }
 
     pub fn is_well_known(&self, ctx: &Context) -> bool {

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package proto_1;
+
+message Request {
+  optional string field_1 = 1;
+  optional string field_2 = 2;
+  string field_3 = 3;
+  repeated string field_4 = 4;
+
+  string field_5 = 5;
+}
+
+// test
+message Response {
+  optional string field_1 = 1;
+  optional string field_2 = 2;
+  int32  field_3 = 3;
+  int64  field_4 = 4;
+  float field_5 = 5;
+  double field_6 = 6;
+  bool field_7 = 7;
+  string field_8 = 20;
+  Enum enums = 21;
+  
+  string field_9 = 1001;
+
+  message NestedResponse1 {
+    message NestedResponse2 {
+      float nested1_field_2 = 1;
+    }
+    int32 nested1_field_1 = 1 [deprecated = true];
+  }
+  map<string, NestedResponse1.NestedResponse2> map_field_1 = 11;
+  map<string, NestedResponse1> map_field_2 = 12;
+
+  Response recursive_data1 = 15;
+  Response recursive_data2 = 16;
+  oneof oneof {
+    int32 oneof_1 = 8;
+    string oneof_2 = 9;
+    float oneof_3 = 10;
+    Response recursive_data3 = 17;
+  }
+
+  NestedResponse1.NestedResponse2 a = 18;
+
+  enum Enum {
+    begin = 0;
+    end = 1;
+  }
+}
+
+
+

@@ -1,14 +1,31 @@
+use std::iter::once;
+
 use swc_common::DUMMY_SP;
-use swc_ecma_ast::{TsEntityName, TsKeywordTypeKind, TsTypeRef};
+use swc_ecma_ast::{Expr, Ident, TsEntityName, TsKeywordTypeKind, TsTypeRef};
 use swc_ecma_utils::quote_ident;
 
 use crate::{
-    context::{Context, Syntax},
+    context::{Context, PropPos, Syntax},
     descriptor::{
-        field_descriptor_proto::Label, field_descriptor_proto::Type, field_options::JSType,
+        field_descriptor_proto::{Label, Type},
+        field_options::JSType,
         FieldDescriptorProto,
     },
 };
+
+pub fn long_ref_type(ctx: &Context) -> TsTypeRef {
+    let long_ident = ctx.get_default_import("long", "Long");
+    TsTypeRef {
+        span: DUMMY_SP,
+        type_name: TsEntityName::Ident(long_ident),
+        type_params: None,
+    }
+}
+
+pub fn long_expr(ctx: &Context) -> Expr {
+    let long = ctx.get_default_import("long", "Long");
+    Expr::Ident(long)
+}
 
 impl FieldDescriptorProto {
     pub fn keyword_type_kind(&self) -> Option<TsKeywordTypeKind> {
@@ -24,7 +41,7 @@ impl FieldDescriptorProto {
         }
         kind
     }
-    pub fn type_ref(&self, ctx: &mut Context) -> Option<TsTypeRef> {
+    pub fn type_ref(&self, ctx: &Context) -> Option<TsTypeRef> {
         if self.is_bytes() {
             return Some(TsTypeRef {
                 span: DUMMY_SP,
@@ -41,12 +58,38 @@ impl FieldDescriptorProto {
         }
         None
     }
+
+    pub fn interface_type_ref(&self, ctx: &Context) -> Option<TsTypeRef> {
+        if self.is_bytes() {
+            return Some(TsTypeRef {
+                span: DUMMY_SP,
+                type_name: TsEntityName::Ident(quote_ident!("Uint8Array")),
+                type_params: None,
+            });
+        }
+        if self.has_type_name() {
+            let type_name_ident: Ident = ctx.lazy_decl_type_ref(
+                self.type_name(),
+                if self.is_message() && !self.is_enum() {
+                    PropPos::Interface
+                } else {
+                    PropPos::Definition
+                },
+            );
+            return Some(TsTypeRef {
+                span: DUMMY_SP,
+                type_name: TsEntityName::Ident(type_name_ident),
+                type_params: None,
+            });
+        }
+        None
+    }
 }
 
 impl FieldDescriptorProto {
     pub fn is_packable(&self) -> bool {
-        return (!self.is_string() && !self.is_group() && !self.is_message() && !self.is_bytes())
-            && self.is_repeated();
+        (!self.is_string() && !self.is_group() && !self.is_message() && !self.is_bytes())
+            && self.is_repeated()
     }
 
     pub fn is_packed(&self, ctx: &Context) -> bool {
@@ -124,7 +167,18 @@ impl FieldDescriptorProto {
             return false;
         }
         let r#type = ctx.get_map_type(self.type_name());
-        return r#type.is_some();
+        r#type.is_some()
+    }
+
+    pub fn is_deprecated(&self, ctx: &Context) -> bool {
+        self.options
+            .as_ref()
+            .and_then(|opt| opt.deprecated)
+            .unwrap_or_default()
+    }
+
+    pub fn is_primitive(&self) -> bool {
+        self.is_number() || self.is_booelan() || self.is_string()
     }
 
     // Label

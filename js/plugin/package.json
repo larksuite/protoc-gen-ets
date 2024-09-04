@@ -1,22 +1,31 @@
 {
-    "name": "protoc-gen-ts",
-    "description": "Compile protocol buffers descriptors to Typescript.",
-    "version": "0.0.0",
-    "license": "MIT",
-    "author": {
-        "email": "thesayyn@gmail.com",
-        "name": "thesayyn",
-        "url": "https://github.com/thesayyn"
-    },
-    "funding": {
-        "type": "individual",
-        "url": "https://github.com/sponsors/thesayyn"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/thesayyn/protoc-gen-ts.git"
-    },
-    "bin": {
-        "protoc-gen-ts": "main.js"
+  "name": "@lark-oh/protoc-gen-ets",
+  "description": "Compile protocol buffers descriptors to Typescript. Lark for Harmony patched.",
+  "version": "0.2.10",
+  "license": "MIT",
+  "author": {
+    "email": "thesayyn@gmail.com",
+    "name": "thesayyn",
+    "url": "https://github.com/thesayyn"
+  },
+  "contributors": [
+    {
+      "name": "cuixianming",
+      "email": "cuixianming@bytedance.com"
     }
+  ],
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/thesayyn"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lark/protoc-gen-ets.git"
+  },
+  "bin": {
+    "protoc-gen-ets": "main.js"
+  },
+  "files": [
+    "./*"
+  ]
 }

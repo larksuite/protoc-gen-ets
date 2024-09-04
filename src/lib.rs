@@ -1,14 +1,16 @@
 include!(concat!(env!("OUT_DIR"), "/protogen/mod.rs"));
 
+pub mod collector;
+pub mod common;
+pub mod compile;
+pub mod context;
+pub mod emit;
+pub mod export;
 pub mod options;
 pub mod print;
 pub mod runtime;
-pub mod context;
-pub mod common;
-pub mod mapper;
-pub mod emit;
-pub mod compile;
-
+#[macro_use]
+pub mod macros;
 
 use wasm_bindgen::prelude::*;
 

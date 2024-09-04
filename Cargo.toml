@@ -1,51 +1,62 @@
 [package]
-name = "protoc_gen_ts"
-version = "0.1.0"
-authors = ["Sahin <thesayyn@gmail.com>"]
+name = "protoc_gen_ets"
+version = "0.1.1"
+authors = ["Sahin <thesayyn@gmail.com>", "Xana <cuixianming@bytedance.com>"]
+repository = "https://github.com/lark/protoc-gen-ets"
 edition = "2018"
+license = "MIT"
+description = "a ts, ets generator for protobuf via protoc"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "protoc-gen-ts"
+name = "protoc-gen-ets"
 path = "src/main.rs"
 
-[[bin]]
-name = "ast-dump"
-path = "tests/helper/ast.rs"
+# [[bin]]
+# name = "ast-dump"
+# path = "tests/helper/ast.rs"
 
 [dependencies]
-swc_atoms = "0.5.5"
-swc_common = {version = "0.31.8", features = ["tty-emitter"]}
-swc_ecma_ast = {version = "0.104.1", features=["serde-impl"]}
+swc_atoms = "0.6.7"
+swc_common = { version = "0.34.4", features = ["tty-emitter"] }
+swc_ecma_ast = { version = "0.115.1", features = ["serde-impl"] }
 num-bigint = { version = "0.4", features = ["serde"] }
-swc_ecma_codegen = "0.139.2"
-swc_ecma_codegen_macros = "0.7.2"
-swc_ecma_parser = "0.134.1"
-swc_ecma_utils = "0.117.1"
+swc_ecma_codegen = "0.151.1"
+swc_ecma_codegen_macros = "0.7.6"
+swc_ecma_parser = "0.146.12"
+swc_ecma_utils = "0.130.3"
 serde = "1.0.163"
 serde_json = "1.0.96"
 triomphe = "0.1.8"
 protobuf = "3.1.0"
-once_cell = "1.17.1"
-swc_ecma_visit = "0.90.4"
+once_cell = "1"
+swc_ecma_visit = "0.101.0"
 pathdiff = "0.2.1"
 dashmap = "5.4.0"
 crossbeam-utils = "0.8.15"
 anyhow = "1.0.75"
 wasm-bindgen = "0.2.88"
+js-sys = "0.3.69"
+napi = { version = "2.10.0", features = ["napi6"] }
+napi-derive = { version = "2", features = ["type-def"] }
 console_error_panic_hook = "0.1.7"
 convert_case = "0.6.0"
+heck = "0.5"
+thiserror = "1.0.30"
+toml = "0.5"
+ahash = "0.8.11"
 
 [build-dependencies]
 protobuf-codegen = "3.1.0"
 cargo-patch = "0.3.2"
-swc_common = {version = "0.31.8", features = ["tty-emitter"]}
-swc_ecma_ast = {version = "0.104.1", features=["serde-impl"]}
-swc_ecma_parser = "0.134.1"
+swc_common = { version = "0.34.4", features = ["tty-emitter"] }
+swc_ecma_ast = { version = "0.115.1", features = ["serde-impl"] }
+swc_ecma_parser = "0.146.12"
 serde = "1.0.163"
 serde_json = "1.0.96"
+napi-build = { version = "1.0" }
 
 [dev-dependencies]
 glob = "0.3.1"
@@ -58,6 +69,4 @@ protobuf-parse = { path = './target/patch/protobuf-parse-3.4.0' }
 
 [package.metadata.patch.protobuf-parse]
 version = "3.4.0"
-patches = [
-    { path = "./patches/pure_mod.patch", source = "GithubPrDiff" },
-]
+patches = [{ path = "./patches/pure_mod.patch", source = "GithubPrDiff" }]

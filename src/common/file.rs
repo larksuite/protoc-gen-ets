@@ -20,7 +20,7 @@ impl FileDescriptorProto {
         }
 
         for message in &self.message_type {
-            modules.append(&mut message.print(&mut ctx, runtime))
+            modules.append(&mut message.print(&mut ctx, runtime, &mut vec![]))
         }
 
         for service in &self.service {
@@ -34,5 +34,14 @@ impl FileDescriptorProto {
         modules.splice(0..0, imports);
 
         modules
+    }
+
+    pub fn file_name(&self) -> &str {
+        self.name()
+            .split('/')
+            .last()
+            .unwrap_or_default()
+            .strip_suffix(".proto")
+            .unwrap()
     }
 }
