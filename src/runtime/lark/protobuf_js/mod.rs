@@ -18,7 +18,7 @@ pub struct LarkPbRuntime;
 impl LarkPbRuntime {
     pub const RUNTIME_PACKAGE: &'static str = "@ohos/protobufjs";
     pub const RUNTIME_PACKAGE_NAME: &'static str = "$protobuf";
-    pub const LARK_PACKAGE: &'static str = "@lark/lark_pb";
+    pub const LARK_PACKAGE: &'static str = "@lark/ohos_pb";
     pub const LARK_PACKAGE_NAME: &'static str = "$lark";
 
     pub const PB_WRITER_NAME: &'static str = "Writer";
