@@ -1,7 +1,7 @@
 {
   "name": "@larkoh/protoc-gen-ets",
   "description": "Compile protocol buffers descriptors to ArkTS. Lark for Harmony patched.",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "license": "MIT",
   "keywords": [
     "protobuf",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lark/protoc-gen-ets.git"
+    "url": "git+https://github.com/larksuite/protoc-gen-ets.git"
   },
   "bin": {
     "protoc-gen-ets": "main.js"
