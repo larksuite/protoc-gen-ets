@@ -1,0 +1,16 @@
+{
+ "name": "@lark/ohos_pb",
+ "version": "1.0.0",
+ "description": "pre-declaration of protoc-gen-ets generated code interface",
+ "main": "Index.ets",
+ "author": {
+   "name": "Xana Hopper",
+   "email": "cuixianming@bytedance.com"
+ },
+ "repository": "https://github.com/larksuite/protoc-gen-ets",
+ "license": "MIT",
+ "dependencies": {
+   "@ohos/protobufjs": "2.0.0",
+   "long": "5"
+ }
+}
