@@ -19,7 +19,7 @@ Run with [`@ohos/protobufjs`](https://ohpm.openharmony.cn/#/cn/detail/@ohos%2Fpr
 ## Usage
 
 ```sh
-npm install -g @lark/protoc-gen-ets
+npm install -g @larkoh/protoc-gen-ets
 ```
 
 ### Protoc

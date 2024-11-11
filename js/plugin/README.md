@@ -29,7 +29,7 @@ Become a maintainer? Send an [email](mailto:thesayyn@gmail.com?subject=Become%20
 ## Usage
 
 ```sh
-npm install -g @lark/protoc-gen-ets
+npm install -g @larkoh/protoc-gen-ets
 ```
 
 ### Protoc

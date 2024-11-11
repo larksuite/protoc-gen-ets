@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@lark-oh/protoc-gen-ets": "file:js/plugin"
+    "@larkoh/protoc-gen-ets": "file:js/plugin"
   }
 }

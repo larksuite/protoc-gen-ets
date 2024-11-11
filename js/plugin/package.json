@@ -1,5 +1,5 @@
 {
-  "name": "@lark/protoc-gen-ets",
+  "name": "@larkoh/protoc-gen-ets",
   "description": "Compile protocol buffers descriptors to ArkTS. Lark for Harmony patched.",
   "version": "0.2.10",
   "license": "MIT",
