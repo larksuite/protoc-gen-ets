@@ -14,10 +14,6 @@ crate-type = ["cdylib", "rlib"]
 name = "protoc-gen-ets"
 path = "src/main.rs"
 
-# [[bin]]
-# name = "ast-dump"
-# path = "tests/helper/ast.rs"
-
 [dependencies]
 swc_atoms = "0.6.7"
 swc_common = { version = "0.34.4", features = ["tty-emitter"] }
@@ -37,7 +33,7 @@ pathdiff = "0.2.1"
 dashmap = "5.4.0"
 crossbeam-utils = "0.8.15"
 anyhow = "1.0.75"
-wasm-bindgen = "0.2.88"
+wasm-bindgen = { version = "0.2.88", optional = true }
 js-sys = "0.3.69"
 napi = { version = "2.10.0", features = ["napi6"] }
 napi-derive = { version = "2", features = ["type-def"] }
@@ -47,10 +43,10 @@ heck = "0.5"
 thiserror = "1.0.30"
 toml = "0.5"
 ahash = "0.8.11"
+protobuf-parse = "=3.4.0"
 
 [build-dependencies]
 protobuf-codegen = "3.1.0"
-cargo-patch = "0.3.2"
 swc_common = { version = "0.34.4", features = ["tty-emitter"] }
 swc_ecma_ast = { version = "0.115.1", features = ["serde-impl"] }
 swc_ecma_parser = "0.146.12"
@@ -64,9 +60,5 @@ cfg-if = "1.0.0"
 protobuf-parse = "=3.4.0"
 pretty_assertions_sorted = "1.2.3"
 
-[patch.crates-io]
-protobuf-parse = { path = './target/patch/protobuf-parse-3.4.0' }
-
-[package.metadata.patch.protobuf-parse]
-version = "3.4.0"
-patches = [{ path = "./patches/pure_mod.patch", source = "GithubPrDiff" }]
+[features]
+wasm-build = ["wasm-bindgen"]
